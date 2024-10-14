@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Top Page</title>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div>
+    <p>Hello, world!</p>
+    <p>Spring Boot + Thymeleaf + Web Socket</p>
+    <a href="/greeting">入力ページへ</a>
+</div>
+<div id="chat">
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message..."/>
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+    var stompClient = null;
+
+    function connect() {
+        var socket = new SockJS('/chat');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/messages', function (message) {
+                showMessage(JSON.parse(message.body));
+            });
+        });
+    }
+
+    function sendMessage() {
+        var messageContent = document.getElementById('messageInput').value;
+        stompClient.send("/app/sendMessage", {}, JSON.stringify({'content': messageContent, 'sender': 'User'}));
+    }
+
+    function showMessage(message) {
+        var messagesDiv = document.getElementById('messages');
+        var messageElement = document.createElement('div');
+        messageElement.appendChild(document.createTextNode(message.sender + ": " + message.content));
+        messagesDiv.appendChild(messageElement);
+    }
+
+    connect();
+</script>
+</body>
+</html>
